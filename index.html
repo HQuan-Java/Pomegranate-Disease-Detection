@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍎 PomegranateAI – Nhận Diện Bệnh Quả Lựu</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --green-dark:  #1a4731;
+      --green-mid:   #2d7a4f;
+      --green-light: #4caf78;
+      --green-pale:  #e8f5ee;
+      --red-tomato:  #e53935;
+      --red-light:   #fdecea;
+      --amber:       #f59e0b;
+      --amber-light: #fffbeb;
+      --white:       #ffffff;
+      --gray-50:     #f9fafb;
+      --gray-100:    #f3f4f6;
+      --gray-200:    #e5e7eb;
+      --gray-700:    #374151;
+      --gray-900:    #111827;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,.14);
+      --radius:      14px;
+      --radius-sm:   8px;
+      --transition:  all 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    *{box-sizing:border-box;}
+    body{font-family:"Be Vietnam Pro",sans-serif;background:var(--gray-50);color:var(--gray-900);min-height:100vh;}
+
+    /* ── Hero ── */
+    .hero-header{
+      background:linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 60%,#38a169 100%);
+      padding:40px 0 56px;position:relative;overflow:hidden;
+    }
+    .hero-header::before{
+      content:"";position:absolute;inset:0;
+      background-image:
+        radial-gradient(circle at 20% 50%,rgba(255,255,255,.06) 0%,transparent 50%),
+        radial-gradient(circle at 80% 20%,rgba(255,255,255,.04) 0%,transparent 40%);
+    }
+    .badge-tag{
+      background:rgba(255,255,255,.15);color:#fff;font-size:.72rem;font-weight:600;
+      letter-spacing:.08em;text-transform:uppercase;padding:5px 12px;border-radius:99px;
+      border:1px solid rgba(255,255,255,.2);display:inline-block;margin-bottom:14px;
+    }
+    .hero-header h1{color:#fff;font-weight:800;font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.2;margin-bottom:10px;}
+    .hero-header p{color:rgba(255,255,255,.75);font-size:.95rem;max-width:520px;}
+    .hero-emoji{font-size:3.2rem;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));}
+    .stat-pill{
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+      border-radius:99px;padding:6px 16px;color:#fff;font-size:.82rem;font-weight:500;
+    }
+
+    /* ── Cards ── */
+    .card{border:none;border-radius:var(--radius);box-shadow:var(--shadow-sm);transition:var(--transition);}
+    .card:hover{box-shadow:var(--shadow-md);}
+    .section-title{font-weight:700;font-size:1rem;color:var(--gray-700);display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+    .section-title i{color:var(--green-mid);font-size:1.1rem;}
+
+    /* ── Tabs ── */
+    .mode-tabs{display:flex;gap:8px;margin-bottom:20px;}
+    .mode-tab{
+      flex:1;padding:10px 16px;border-radius:var(--radius-sm);border:2px solid var(--gray-200);
+      background:var(--white);font-weight:600;font-size:.88rem;color:var(--gray-700);
+      cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .mode-tab:hover{border-color:var(--green-mid);color:var(--green-mid);}
+    .mode-tab.active{
+      border-color:var(--green-mid);background:var(--green-pale);color:var(--green-dark);
+      box-shadow:0 0 0 3px rgba(45,122,79,.1);
+    }
+    .mode-tab .tab-icon{font-size:1.1rem;}
+
+    /* ── Upload Zone ── */
+    .upload-zone{
+      border:2.5px dashed var(--gray-200);border-radius:var(--radius);
+      background:var(--white);padding:48px 24px;text-align:center;
+      cursor:pointer;transition:var(--transition);position:relative;
+    }
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--green-mid);background:var(--green-pale);}
+    .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+    .upload-icon{
+      width:64px;height:64px;background:var(--green-pale);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      margin:0 auto 16px;font-size:1.8rem;color:var(--green-mid);transition:var(--transition);
+    }
+    .upload-zone:hover .upload-icon{transform:scale(1.1);}
+    .upload-title{font-weight:700;font-size:1rem;color:var(--gray-900);margin-bottom:4px;}
+    .upload-sub{font-size:.82rem;color:#6b7280;}
+
+    /* ── Preview ── */
+    #preview-container,#video-preview-container{display:none;}
+    #preview-img{width:100%;max-height:280px;object-fit:contain;border-radius:var(--radius-sm);background:var(--gray-100);}
+    #video-preview{width:100%;max-height:280px;border-radius:var(--radius-sm);background:#000;}
+
+    /* ── Buttons ── */
+    .btn-analyze{
+      background:linear-gradient(135deg,var(--green-mid),var(--green-dark));
+      color:#fff;border:none;border-radius:var(--radius-sm);font-weight:700;
+      font-size:1rem;padding:13px 32px;transition:var(--transition);
+      box-shadow:0 4px 14px rgba(45,122,79,.3);
+    }
+    .btn-analyze:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,122,79,.4);color:#fff;}
+    .btn-analyze:disabled{opacity:.6;cursor:not-allowed;}
+
+    /* ── Loading ── */
+    #loading-section,#video-loading-section{display:none;}
+    .spinner-wrap{padding:48px 24px;text-align:center;}
+    .spinner-custom{
+      width:52px;height:52px;border:4px solid var(--gray-200);
+      border-top-color:var(--green-mid);border-radius:50%;
+      animation:spin .8s linear infinite;margin:0 auto 16px;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .progress-video{height:8px;border-radius:99px;background:var(--gray-200);overflow:hidden;margin-top:12px;}
+    .progress-video-fill{height:100%;background:linear-gradient(90deg,var(--green-light),var(--green-mid));border-radius:99px;transition:width .4s ease;}
+
+    /* ── Result ── */
+    #result-section,#video-result-section{display:none;}
+    .result-badge{
+      display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;
+      letter-spacing:.05em;text-transform:uppercase;padding:4px 12px;border-radius:99px;
+    }
+    .badge-healthy{background:#dcfce7;color:#166534;}
+    .badge-warning{background:#fef3c7;color:#92400e;}
+    .badge-danger{background:#fee2e2;color:#991b1b;}
+    .disease-name{font-size:1.6rem;font-weight:800;color:var(--gray-900);margin:8px 0 4px;}
+    .confidence-wrap{display:flex;align-items:center;gap:12px;margin:12px 0;}
+    .confidence-bar{flex:1;height:10px;background:var(--gray-200);border-radius:99px;overflow:hidden;}
+    .confidence-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green-light),var(--green-mid));transition:width 1s ease;}
+    .confidence-fill.warn{background:linear-gradient(90deg,#fbbf24,#f59e0b);}
+    .confidence-fill.danger{background:linear-gradient(90deg,#f87171,#ef4444);}
+    .confidence-pct{font-size:1.4rem;font-weight:800;color:var(--green-mid);min-width:56px;text-align:right;}
+    .confidence-pct.warn{color:var(--amber);}
+    .confidence-pct.danger{color:var(--red-tomato);}
+
+    /* ── Recommendation ── */
+    .rec-box{border-radius:var(--radius-sm);padding:20px;border-left:4px solid;}
+    .rec-box.success{background:var(--green-pale);border-color:var(--green-mid);}
+    .rec-box.warning{background:var(--amber-light);border-color:var(--amber);}
+    .rec-box.danger{background:var(--red-light);border-color:var(--red-tomato);}
+    .rec-box h6{font-weight:700;font-size:.9rem;margin-bottom:6px;}
+    .rec-box p{font-size:.85rem;color:var(--gray-700);margin-bottom:12px;}
+    .rec-actions li{
+      font-size:.83rem;color:var(--gray-700);padding:4px 0;
+      border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:flex-start;gap:8px;
+    }
+    .rec-actions li:last-child{border-bottom:none;}
+    .rec-actions li::before{content:"→";color:var(--green-mid);font-weight:700;flex-shrink:0;}
+    .rec-box.danger .rec-actions li::before{color:var(--red-tomato);}
+    .rec-box.warning .rec-actions li::before{color:var(--amber);}
+
+    /* ── Video frame timeline ── */
+    .video-summary{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+      gap:8px;max-height:200px;overflow-y:auto;padding:4px;
+    }
+    .frame-chip{
+      padding:6px 8px;border-radius:8px;text-align:center;font-size:.7rem;font-weight:700;
+      border:1.5px solid transparent;cursor:default;transition:var(--transition);
+    }
+    .frame-chip:hover{transform:scale(1.05);}
+    .frame-chip.success{background:#dcfce7;border-color:#22c55e;color:#166534;}
+    .frame-chip.warning{background:#fef3c7;border-color:#f59e0b;color:#92400e;}
+    .frame-chip.danger{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+    .frame-chip .fc-time{font-size:.65rem;font-weight:400;opacity:.7;display:block;}
+
+    /* ── Disease count bars ── */
+    .dist-bar-wrap{margin-bottom:8px;}
+    .dist-bar-label{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px;}
+    .dist-bar-bg{height:8px;background:var(--gray-200);border-radius:99px;overflow:hidden;}
+    .dist-bar-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+
+    /* ── History ── */
+    .history-row{transition:var(--transition);}
+    .history-row:hover{background:var(--green-pale);}
+    .badge-history{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;}
+    .source-badge{
+      font-size:.65rem;padding:2px 7px;border-radius:99px;font-weight:600;
+      background:rgba(45,122,79,.1);color:var(--green-dark);
+    }
+    .source-badge.video{background:rgba(99,102,241,.1);color:#4338ca;}
+    .empty-state{padding:40px;text-align:center;color:#9ca3af;font-size:.9rem;}
+    .empty-state i{font-size:2.5rem;display:block;margin-bottom:8px;}
+
+    /* ── Info Cards ── */
+    .info-card{border-radius:var(--radius);padding:16px 20px;border-left:4px solid;}
+    .info-card.healthy{background:#f0fdf4;border-color:#22c55e;}
+    .info-card.warning{background:#fffbeb;border-color:#f59e0b;}
+    .info-card.danger{background:#fff1f2;border-color:#f43f5e;}
+    .info-card h6{font-weight:700;font-size:.88rem;margin-bottom:4px;}
+    .info-card p{font-size:.8rem;color:var(--gray-700);margin:0;}
+
+    footer{
+      background:var(--green-dark);color:rgba(255,255,255,.6);
+      text-align:center;font-size:.8rem;padding:20px;margin-top:48px;
+    }
+    footer strong{color:rgba(255,255,255,.9);}
+    .fade-in{animation:fadeIn .4s ease both;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <span class="badge-tag"><i class="bi bi-cpu me-1"></i>AI · Nông nghiệp thông minh</span>
+        <h1>🍎 PomegranateAI<br>
+          <span style="font-weight:400;font-size:.6em;opacity:.85">Hệ thống Nhận diện Bệnh Quả Lựu</span>
+        </h1>
+        <p>Upload ảnh hoặc video quả lựu — AI phân tích và đề xuất giải pháp điều trị ngay lập tức.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <span class="stat-pill"><i class="bi bi-image me-1"></i>Phân tích ảnh</span>
+          <span class="stat-pill"><i class="bi bi-camera-video me-1"></i>Phân tích video</span>
+          <span class="stat-pill"><i class="bi bi-lightning me-1"></i>EfficientNetB0</span>
+          <span class="stat-pill"><i class="bi bi-cloud me-1"></i>Firebase Cloud</span>
+        </div>
+      </div>
+      <div class="col-md-4 text-center d-none d-md-block">
+        <div class="hero-emoji">🌿</div>
+        <div class="mt-2">
+          <span class="stat-pill"><i class="bi bi-graph-up me-1"></i><span id="stat-count">0</span> dự đoán</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container py-4">
+  <div class="row g-4">
+
+    <!-- LEFT -->
+    <div class="col-lg-7">
+
+      <!-- Mode Tabs -->
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-image" onclick="switchMode('image')">
+          <span class="tab-icon">🖼️</span> Phân tích Ảnh
+        </button>
+        <button class="mode-tab" id="tab-video" onclick="switchMode('video')">
+          <span class="tab-icon">🎬</span> Phân tích Video
+        </button>
+      </div>
+
+      <!-- ══════════════ IMAGE MODE ══════════════ -->
+      <div id="mode-image">
+        <div class="card mb-4">
+          <div class="card-body p-4">
+            <div class="section-title"><i class="bi bi-cloud-upload"></i>Upload Ảnh Quả Lựu</div>
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" id="file-input" accept="image/*"/>
+              <div class="upload-icon"><i class="bi bi-image"></i></div>
+              <div class="upload-title">Kéo thả ảnh vào đây hoặc bấm để chọn</div>
+              <div class="upload-sub">Hỗ trợ JPG, PNG, JPEG, WEBP · Tối đa 16MB</div>
+            </div>
+            <div id="preview-container" class="mt-3 text-center">
+              <img id="preview-img" src="" alt="Preview"/>
+              <div class="mt-2 d-flex justify-content-between align-items-center">
+                <small id="file-name" class="text-muted"></small>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-reset">
+                  <i class="bi bi-x-circle me-1"></i>Đổi ảnh
+                </button>
+              </div>
+            </div>
+            <div class="mt-4">
+              <button class="btn btn-analyze w-100" id="btn-analyze" disabled>
+                <i class="bi bi-cpu me-2"></i>Phân Tích Bệnh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Image -->
+        <div class="card mb-4" id="loading-section">
+          <div class="card-body">
+            <div class="spinner-wrap">
+              <div class="spinner-custom"></div>
+              <div class="fw-bold" style="color:var(--green-mid)">AI đang phân tích ảnh...</div>
+              <small class="text-muted">Vui lòng chờ trong giây lát</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Image -->
+        <div class="card fade-in" id="result-section">
+          <div class="card-body p-4">
+            <div class="section-title"><i class="bi bi-graph-up-arrow"></i>Kết Quả Phân Tích Ảnh</div>
+            <div class="row align-items-center mb-3">
+              <div class="col">
+                <span class="result-badge" id="result-badge"></span>
+                <div class="disease-name" id="disease-name"></div>
+                <small class="text-muted" id="result-timestamp"></small>
+              </div>
+              <div class="col-auto">
+                <img id="result-img" src="" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:2px solid var(--gray-200);"/>
+              </div>
+            </div>
+            <div class="confidence-wrap mb-4">
+              <div class="confidence-bar">
+                <div class="confidence-fill" id="confidence-fill" style="width:0%"></div>
+              </div>
+              <div class="confidence-pct" id="confidence-pct">0%</div>
+            </div>
+            <div class="rec-box" id="rec-box">
+              <h6 id="rec-title"></h6>
+              <p id="rec-desc"></p>
+              <ul class="rec-actions list-unstyled mb-0" id="rec-actions"></ul>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-outline-secondary btn-sm" id="btn-new-analysis">
+                <i class="bi bi-arrow-repeat me-1"></i>Phân tích mới
+              </button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /mode-image -->
+
+      <!-- ══════════════ VIDEO MODE ══════════════ -->
+      <div id="mode-video" style="display:none">
+        <div class="card mb-4">
+          <div class="card-body p-4">
+            <div class="section-title"><i class="bi bi-camera-video"></i>Upload Video Quả Lựu</div>
+            <div class="upload-zone" id="video-upload-zone">
+              <input type="file" id="video-input" accept="video/*"/>
+              <div class="upload-icon"><i class="bi bi-camera-video"></i></div>
+              <div class="upload-title">Kéo thả video vào đây hoặc bấm để chọn</div>
+              <div class="upload-sub">Hỗ trợ MP4, AVI, MOV, MKV, WEBM · Tối đa 100MB</div>
+            </div>
+            <div id="video-preview-container" class="mt-3">
+              <video id="video-preview" controls></video>
+              <div class="mt-2 d-flex justify-content-between align-items-center">
+                <small id="video-file-name" class="text-muted"></small>
+                <button class="btn btn-sm btn-outline-secondary" id="btn-video-reset">
+                  <i class="bi bi-x-circle me-1"></i>Đổi video
+                </button>
+              </div>
+            </div>
+            <div class="mt-4">
+              <button class="btn btn-analyze w-100" id="btn-analyze-video" disabled>
+                <i class="bi bi-play-circle me-2"></i>Phân Tích Video
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Video -->
+        <div class="card mb-4" id="video-loading-section">
+          <div class="card-body p-4">
+            <div class="spinner-wrap">
+              <div class="spinner-custom"></div>
+              <div class="fw-bold" style="color:var(--green-mid)">Đang phân tích video...</div>
+              <small class="text-muted" id="video-loading-text">Trích xuất và phân tích từng frame</small>
+              <div class="progress-video mt-3">
+                <div class="progress-video-fill" id="progress-fill" style="width:5%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Video -->
+        <div class="card fade-in" id="video-result-section">
+          <div class="card-body p-4">
+            <div class="section-title"><i class="bi bi-film"></i>Kết Quả Phân Tích Video</div>
+
+            <!-- Tổng hợp -->
+            <div class="row align-items-center mb-3">
+              <div class="col">
+                <span class="result-badge" id="video-result-badge"></span>
+                <div class="disease-name" id="video-disease-name"></div>
+                <small class="text-muted" id="video-result-meta"></small>
+              </div>
+            </div>
+            <div class="confidence-wrap mb-3">
+              <div class="confidence-bar">
+                <div class="confidence-fill" id="video-confidence-fill" style="width:0%"></div>
+              </div>
+              <div class="confidence-pct" id="video-confidence-pct">0%</div>
+            </div>
+
+            <!-- Phân bổ nhãn -->
+            <div class="mb-3">
+              <div class="section-title" style="font-size:.85rem;margin-bottom:10px;">
+                <i class="bi bi-bar-chart"></i>Phân bổ frame theo nhãn
+              </div>
+              <div id="disease-distribution"></div>
+            </div>
+
+            <!-- Timeline frame -->
+            <div class="mb-4">
+              <div class="section-title" style="font-size:.85rem;margin-bottom:10px;">
+                <i class="bi bi-grid-3x3"></i>Kết quả từng frame
+              </div>
+              <div class="video-summary" id="frame-summary"></div>
+            </div>
+
+            <!-- Khuyến nghị -->
+            <div class="rec-box" id="video-rec-box">
+              <h6 id="video-rec-title"></h6>
+              <p id="video-rec-desc"></p>
+              <ul class="rec-actions list-unstyled mb-0" id="video-rec-actions"></ul>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-outline-secondary btn-sm" id="btn-new-video">
+                <i class="bi bi-arrow-repeat me-1"></i>Phân tích video mới
+              </button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /mode-video -->
+
+    </div><!-- /col-lg-7 -->
+
+    <!-- RIGHT -->
+    <div class="col-lg-5">
+
+      <!-- History -->
+      <div class="card mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="section-title mb-0"><i class="bi bi-clock-history"></i>Lịch Sử Dự Đoán</div>
+            <button class="btn btn-sm btn-outline-danger" id="btn-clear-history">
+              <i class="bi bi-trash me-1"></i>Xóa
+            </button>
+          </div>
+          <div id="history-container">
+            <div class="empty-state"><i class="bi bi-inbox"></i>Chưa có lịch sử. Upload ảnh để bắt đầu!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disease Info -->
+      <div class="card">
+        <div class="card-body p-4">
+          <div class="section-title"><i class="bi bi-info-circle"></i>Thông Tin 5 Loại Bệnh</div>
+          <div class="d-flex flex-column gap-2">
+            <div class="info-card healthy">
+              <h6>✅ Healthy – Quả khỏe mạnh</h6>
+              <p>Vỏ đỏ đều, không có vết bệnh. Tiếp tục chăm sóc định kỳ.</p>
+            </div>
+            <div class="info-card warning">
+              <h6>⚠️ Alternaria – Đốm nâu</h6>
+              <p>Nấm <em>Alternaria punicae</em>. Vết nâu khô, sần sùi, co rút trên vỏ quả.</p>
+            </div>
+            <div class="info-card danger">
+              <h6>🚨 Anthracnose – Thán thư</h6>
+              <p>Nấm <em>Colletotrichum</em>. Vết đen hoại tử lớn, lan rộng rất nhanh.</p>
+            </div>
+            <div class="info-card danger">
+              <h6>🚨 Bacterial Blight – Vi khuẩn</h6>
+              <p>Vi khuẩn <em>Xanthomonas</em>. Quả nứt toác, thối đen bên trong.</p>
+            </div>
+            <div class="info-card warning">
+              <h6>⚠️ Cercospora – Đốm rám</h6>
+              <p>Nấm <em>Cercospora punicae</em>. Rám vàng nâu, giống vết côn trùng cắn.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>PomegranateAI</strong> – Hệ thống AI Nhận diện Bệnh Quả Lựu &nbsp;|&nbsp;
+  EfficientNetB0 Transfer Learning · 5 Classes · Ảnh & Video &nbsp;|&nbsp;
+  Môn: <strong>Nông nghiệp thông minh</strong>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   PomegranateAI – Frontend JS (Image + Video)
+═══════════════════════════════════════════════════ */
+
+// ── Mode switch ───────────────────────────────────────────────
+function switchMode(mode) {
+  document.getElementById('mode-image').style.display = mode === 'image' ? 'block' : 'none';
+  document.getElementById('mode-video').style.display = mode === 'video' ? 'block' : 'none';
+  document.getElementById('tab-image').classList.toggle('active', mode === 'image');
+  document.getElementById('tab-video').classList.toggle('active', mode === 'video');
+}
+
+// ── IMAGE MODE ────────────────────────────────────────────────
+const fileInput    = document.getElementById('file-input');
+const uploadZone   = document.getElementById('upload-zone');
+const previewCont  = document.getElementById('preview-container');
+const previewImg   = document.getElementById('preview-img');
+const fileNameEl   = document.getElementById('file-name');
+const btnAnalyze   = document.getElementById('btn-analyze');
+const btnReset     = document.getElementById('btn-reset');
+const btnNewAnal   = document.getElementById('btn-new-analysis');
+let selectedFile   = null;
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) { showToast('Vui lòng chọn file ảnh', 'danger'); return; }
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImg.src = e.target.result;
+    previewCont.style.display = 'block';
+    uploadZone.style.display  = 'none';
+    fileNameEl.textContent = `${file.name} (${formatSize(file.size)})`;
+    btnAnalyze.disabled = false;
+    document.getElementById('result-section').style.display  = 'none';
+    document.getElementById('loading-section').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetUpload() {
+  selectedFile = null; fileInput.value = ''; previewImg.src = '';
+  previewCont.style.display = 'none'; uploadZone.style.display = 'block';
+  btnAnalyze.disabled = true;
+  document.getElementById('loading-section').style.display = 'none';
+  document.getElementById('result-section').style.display  = 'none';
+}
+btnReset.addEventListener('click', resetUpload);
+btnNewAnal.addEventListener('click', resetUpload);
+
+btnAnalyze.addEventListener('click', async () => {
+  if (!selectedFile) return;
+  btnAnalyze.disabled = true;
+  document.getElementById('loading-section').style.display = 'block';
+  document.getElementById('result-section').style.display  = 'none';
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  try {
+    const res  = await fetch('/predict', { method: 'POST', body: formData });
+    const data = await res.json();
+    document.getElementById('loading-section').style.display = 'none';
+    if (!res.ok || data.error) { showToast('Lỗi: ' + (data.error || 'Không thể phân tích'), 'danger'); btnAnalyze.disabled = false; return; }
+    renderResult(data);
+    loadHistory();
+  } catch {
+    document.getElementById('loading-section').style.display = 'none';
+    btnAnalyze.disabled = false;
+    showToast('Không kết nối được server Flask!', 'danger');
+  }
+});
+
+function renderResult(data) {
+  const rec  = data.recommendation;
+  const conf = data.confidence;
+  const classMap = { success:'badge-healthy', warning:'badge-warning', danger:'badge-danger' };
+  const badgeEl  = document.getElementById('result-badge');
+  badgeEl.className = 'result-badge ' + (classMap[rec.status] || 'badge-healthy');
+  badgeEl.innerHTML = rec.icon + ' ' + rec.status.toUpperCase();
+  document.getElementById('disease-name').textContent    = rec.title;
+  document.getElementById('result-timestamp').textContent = '🕐 ' + data.timestamp;
+  document.getElementById('result-img').src = data.image_url;
+
+  const fill = document.getElementById('confidence-fill');
+  const pct  = document.getElementById('confidence-pct');
+  fill.style.width = '0%'; fill.className = 'confidence-fill'; pct.className = 'confidence-pct';
+  if (rec.status === 'warning') { fill.classList.add('warn'); pct.classList.add('warn'); }
+  if (rec.status === 'danger')  { fill.classList.add('danger'); pct.classList.add('danger'); }
+  setTimeout(() => { fill.style.width = conf + '%'; animateNum(pct, 0, conf, 900, v => v.toFixed(1)+'%'); }, 100);
+
+  const recBox = document.getElementById('rec-box');
+  recBox.className = 'rec-box ' + rec.status;
+  document.getElementById('rec-title').textContent = rec.icon + ' ' + rec.title;
+  document.getElementById('rec-desc').textContent  = rec.description;
+  const list = document.getElementById('rec-actions');
+  list.innerHTML = '';
+  rec.actions.forEach(a => { const li = document.createElement('li'); li.textContent = a; list.appendChild(li); });
+
+  document.getElementById('result-section').style.display = 'block';
+  document.getElementById('result-section').classList.add('fade-in');
+  document.getElementById('result-section').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── VIDEO MODE ────────────────────────────────────────────────
+const videoInput     = document.getElementById('video-input');
+const videoUpZone    = document.getElementById('video-upload-zone');
+const videoPrevCont  = document.getElementById('video-preview-container');
+const videoPreview   = document.getElementById('video-preview');
+const videoFileName  = document.getElementById('video-file-name');
+const btnAnalyzeVid  = document.getElementById('btn-analyze-video');
+const btnVideoReset  = document.getElementById('btn-video-reset');
+const btnNewVideo    = document.getElementById('btn-new-video');
+let selectedVideo    = null;
+
+videoUpZone.addEventListener('dragover', e => { e.preventDefault(); videoUpZone.classList.add('drag-over'); });
+videoUpZone.addEventListener('dragleave', () => videoUpZone.classList.remove('drag-over'));
+videoUpZone.addEventListener('drop', e => {
+  e.preventDefault(); videoUpZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleVideo(e.dataTransfer.files[0]);
+});
+videoInput.addEventListener('change', () => { if (videoInput.files[0]) handleVideo(videoInput.files[0]); });
+
+function handleVideo(file) {
+  if (!file.type.startsWith('video/')) { showToast('Vui lòng chọn file video', 'danger'); return; }
+  selectedVideo = file;
+  videoPreview.src = URL.createObjectURL(file);
+  videoPrevCont.style.display = 'block';
+  videoUpZone.style.display   = 'none';
+  videoFileName.textContent   = `${file.name} (${formatSize(file.size)})`;
+  btnAnalyzeVid.disabled = false;
+  document.getElementById('video-result-section').style.display  = 'none';
+  document.getElementById('video-loading-section').style.display = 'none';
+}
+
+function resetVideo() {
+  selectedVideo = null; videoInput.value = ''; videoPreview.src = '';
+  videoPrevCont.style.display = 'none'; videoUpZone.style.display = 'block';
+  btnAnalyzeVid.disabled = true;
+  document.getElementById('video-loading-section').style.display = 'none';
+  document.getElementById('video-result-section').style.display  = 'none';
+}
+btnVideoReset.addEventListener('click', resetVideo);
+btnNewVideo.addEventListener('click', resetVideo);
+
+btnAnalyzeVid.addEventListener('click', async () => {
+  if (!selectedVideo) return;
+  btnAnalyzeVid.disabled = true;
+  document.getElementById('video-loading-section').style.display = 'block';
+  document.getElementById('video-result-section').style.display  = 'none';
+
+  // Fake progress bar
+  let prog = 5;
+  const progEl = document.getElementById('progress-fill');
+  const progTimer = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 8, 90);
+    progEl.style.width = prog + '%';
+  }, 600);
+
+  const formData = new FormData();
+  formData.append('file', selectedVideo);
+  try {
+    const res  = await fetch('/predict_video', { method:'POST', body: formData });
+    const data = await res.json();
+    clearInterval(progTimer); progEl.style.width = '100%';
+    setTimeout(() => { document.getElementById('video-loading-section').style.display = 'none'; }, 400);
+
+    if (!res.ok || data.error) { showToast('Lỗi: ' + (data.error || 'Không thể phân tích video'), 'danger'); btnAnalyzeVid.disabled = false; return; }
+    renderVideoResult(data);
+    loadHistory();
+  } catch {
+    clearInterval(progTimer);
+    document.getElementById('video-loading-section').style.display = 'none';
+    btnAnalyzeVid.disabled = false;
+    showToast('Không kết nối được server Flask!', 'danger');
+  }
+});
+
+function renderVideoResult(data) {
+  const rec  = data.recommendation;
+  const conf = data.final_conf;
+  const classMap = { success:'badge-healthy', warning:'badge-warning', danger:'badge-danger' };
+
+  const badge = document.getElementById('video-result-badge');
+  badge.className = 'result-badge ' + (classMap[rec.status] || 'badge-healthy');
+  badge.innerHTML = rec.icon + ' ' + rec.status.toUpperCase();
+
+  document.getElementById('video-disease-name').textContent = rec.title;
+  document.getElementById('video-result-meta').textContent  =
+    `🕐 ${data.timestamp}  ·  🎬 ${data.duration}s  ·  📊 ${data.frame_count} frames phân tích`;
+
+  const fill = document.getElementById('video-confidence-fill');
+  const pct  = document.getElementById('video-confidence-pct');
+  fill.style.width = '0%'; fill.className = 'confidence-fill'; pct.className = 'confidence-pct';
+  if (rec.status === 'warning') { fill.classList.add('warn'); pct.classList.add('warn'); }
+  if (rec.status === 'danger')  { fill.classList.add('danger'); pct.classList.add('danger'); }
+  setTimeout(() => { fill.style.width = conf + '%'; animateNum(pct, 0, conf, 900, v => v.toFixed(1)+'%'); }, 100);
+
+  // Distribution bars
+  const distEl = document.getElementById('disease-distribution');
+  const total  = data.frame_count || 1;
+  const colorMap = {
+    Healthy:'#22c55e', Alternaria:'#f59e0b', Anthracnose:'#ef4444',
+    Bacterial_Blight:'#dc2626', Cercospora:'#f59e0b'
+  };
+  distEl.innerHTML = Object.entries(data.disease_counts)
+    .sort((a,b) => b[1]-a[1])
+    .map(([name, count]) => {
+      const pct = Math.round(count/total*100);
+      const col = colorMap[name] || '#6b7280';
+      return `<div class="dist-bar-wrap">
+        <div class="dist-bar-label"><span>${name}</span><span>${count} frame (${pct}%)</span></div>
+        <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:0%;background:${col}" data-w="${pct}"></div></div>
+      </div>`;
+    }).join('');
+  setTimeout(() => {
+    distEl.querySelectorAll('.dist-bar-fill').forEach(el => el.style.width = el.dataset.w + '%');
+  }, 150);
+
+  // Frame chips
+  const summaryEl = document.getElementById('frame-summary');
+  summaryEl.innerHTML = data.frame_results.map(f => `
+    <div class="frame-chip ${f.status}" title="${f.prediction} (${f.confidence}%)">
+      <span>${f.prediction.substring(0,6)}</span>
+      <span class="fc-time">${f.time_sec}s · ${f.confidence.toFixed(0)}%</span>
+    </div>`).join('');
+
+  // Recommendation
+  const recBox = document.getElementById('video-rec-box');
+  recBox.className = 'rec-box ' + rec.status;
+  document.getElementById('video-rec-title').textContent = rec.icon + ' ' + rec.title;
+  document.getElementById('video-rec-desc').textContent  = rec.description;
+  const list = document.getElementById('video-rec-actions');
+  list.innerHTML = '';
+  rec.actions.forEach(a => { const li = document.createElement('li'); li.textContent = a; list.appendChild(li); });
+
+  document.getElementById('video-result-section').style.display = 'block';
+  document.getElementById('video-result-section').classList.add('fade-in');
+  document.getElementById('video-result-section').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── Lịch sử ───────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const res  = await fetch('/history');
+    const data = await res.json();
+    renderHistory(data);
+    document.getElementById('stat-count').textContent = data.length;
+  } catch {}
+}
+
+function renderHistory(history) {
+  const cont = document.getElementById('history-container');
+  if (!history || history.length === 0) {
+    cont.innerHTML = `<div class="empty-state"><i class="bi bi-inbox"></i>Chưa có lịch sử.</div>`;
+    return;
+  }
+  const sStyle = { low:'bg-success bg-opacity-10 text-success', medium:'bg-warning bg-opacity-10 text-warning', high:'bg-danger bg-opacity-10 text-danger' };
+  cont.innerHTML = `
+    <div class="table-responsive" style="max-height:340px;overflow-y:auto">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th style="font-size:.75rem">Tên file</th>
+            <th style="font-size:.75rem">Nguồn</th>
+            <th style="font-size:.75rem">Kết quả</th>
+            <th style="font-size:.75rem">Tin cậy</th>
+            <th style="font-size:.75rem">Giờ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${history.slice(0,20).map(h => `
+            <tr class="history-row">
+              <td style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.78rem" title="${h.filename}">${h.filename}</td>
+              <td><span class="source-badge ${h.source === 'video' ? 'video' : ''}">${h.source === 'video' ? '🎬' : '🖼️'}</span></td>
+              <td><span class="badge-history ${sStyle[h.severity] || sStyle.low}">${h.prediction}</span></td>
+              <td style="font-size:.82rem;font-weight:700">${h.confidence}%</td>
+              <td style="font-size:.72rem;color:#9ca3af">${h.timestamp.split(' ')[1]}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+document.getElementById('btn-clear-history').addEventListener('click', async () => {
+  if (!confirm('Xóa toàn bộ lịch sử dự đoán?')) return;
+  await fetch('/history/clear', { method:'POST' });
+  loadHistory();
+  document.getElementById('stat-count').textContent = '0';
+  showToast('Đã xóa lịch sử', 'success');
+});
+
+// ── Helpers ───────────────────────────────────────────────────
+function animateNum(el, from, to, dur, fmt) {
+  const start = performance.now();
+  (function step(now) {
+    const p = Math.min((now-start)/dur, 1);
+    const e = 1 - Math.pow(1-p, 3);
+    el.textContent = fmt(from + (to-from)*e);
+    if (p < 1) requestAnimationFrame(step);
+  })(start);
+}
+
+function formatSize(b) {
+  if (b < 1024) return b+' B';
+  if (b < 1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+
+function showToast(message, type='success') {
+  document.querySelector('.toast-custom')?.remove();
+  const colors = { success:'#2d7a4f', danger:'#e53935', warning:'#f59e0b' };
+  const icons  = { success:'check-circle', danger:'x-circle', warning:'exclamation-triangle' };
+  const t = document.createElement('div');
+  t.className = 'toast-custom';
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:${colors[type]};
+    color:#fff;padding:12px 20px;border-radius:10px;font-size:.88rem;font-weight:600;
+    box-shadow:0 4px 16px rgba(0,0,0,.2);animation:fadeIn .3s ease;display:flex;align-items:center;gap:8px;max-width:340px`;
+  t.innerHTML = `<i class="bi bi-${icons[type]||icons.success}"></i> ${message}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadHistory();
+</script>
+</body>
+</html>
