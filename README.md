@@ -1,6 +1,6 @@
 # 🍎 PomegranateAI — Hệ thống Nhận diện Bệnh Quả Lựu bằng AI
 
-> **Môn học:** Nông nghiệp thông minh  
+> **Môn học:** TPTM & NNTM 
 > **Trường:** Đại học Đại Nam — Khoa Công nghệ thông tin  
 > **Công nghệ cốt lõi:** EfficientNetB0 Transfer Learning + Flask + Firebase + Telegram Bot
 
